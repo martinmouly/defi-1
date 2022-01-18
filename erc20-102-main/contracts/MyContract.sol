@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 import "./ERC20Claimable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
+import "./IERC20Mintable.sol";
 contract MyContract {
 
   ERC20Claimable claimableERC20;
+  IERC20Mintable mintableERC20;
   mapping(address=>uint256) public custody;
 
-  constructor(ERC20Claimable _claimableERC20) public {
+  constructor(ERC20Claimable _claimableERC20, IERC20Mintable _mintableERC20) public {
     claimableERC20 = _claimableERC20;
+    mintableERC20 = _mintableERC20;
   }
 
   function claimTokensOnBehalf() external{
@@ -27,7 +28,12 @@ contract MyContract {
     custody[msg.sender]-=amountToWithdraw;
   }
 
-	//function depositTokens(uint256 amountToWithdraw) external returns (uint256); 
+	function depositTokens(uint256 amountToWithdraw) external returns (uint256){
+    claimableERC20.transferFrom(msg.sender,address(this),amountToWithdraw);
+    custody[msg.sender]+=amountToWithdraw;
+  }
 
-	//function getERC20DepositAddress() external returns (address);
+	function getERC20DepositAddress() external returns (address){
+    return address(mintableERC20);
+  }
 }

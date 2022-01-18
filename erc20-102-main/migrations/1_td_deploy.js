@@ -2,6 +2,7 @@
 var ERC20Claimable = artifacts.require("ERC20Claimable.sol");
 var evaluator = artifacts.require("Evaluator.sol");
 var MyContract = artifacts.require("MyContract.sol");
+var MyMintable = artifacts.require("IERC20Mintable.sol");
 
 
 module.exports = (deployer, network, accounts) => {
@@ -10,8 +11,9 @@ module.exports = (deployer, network, accounts) => {
         await deployEvaluator(deployer, network, accounts); 
         //await setPermissionsAndRandomValues(deployer, network, accounts); 
         //await deployRecap(deployer, network, accounts); 
+		await deployMyMintable(deployer,network,accounts);
 		await deployMyContract(deployer,network,accounts);
-		//await test(deployer,network,accounts);
+		await test(deployer,network,accounts);
     });
 };
 
@@ -35,26 +37,46 @@ async function deployRecap(deployer, network, accounts) {
 	console.log("Evaluator " + Evaluator.address)
 }
 
+async function deployMyMintable(deployer, network, accounts){
+	MyMintable=await MyMintable.new("Martin Mintable","MARTIN")
+}
+
 async function deployMyContract(deployer, network, accounts){
-	MyContract=await MyContract.new(ClaimableToken.address)
+	MyContract=await MyContract.new(ClaimableToken.address,MyMintable.address)
 }
 
 async function test(deployer,network,accounts){
+	console.log("ca submit maggle")
 	await Evaluator.submitExercice(MyContract.address)
-	console.log(await Evaluator.ex4_withdrawFromContract())
+	await console.log("ok submit")
+	await MyMintable.setMinter(MyContract.address,true)
+	await console.log("ok set")
+	await MyMintable.setMinter(Evaluator.address,false)
+	await console.log("ok set 2")
+	console.log(await Evaluator.ex7_createERC20())
 	
-}*/
+}
+*/
 var ERC20Claimable = artifacts.require("ERC20Claimable.sol");
 var evaluator = artifacts.require("Evaluator.sol");
 var MyContract = artifacts.require("MyContract.sol");
+var MyMintable = artifacts.require("IERC20Mintable.sol");
 
 module.exports = async function (deployer) {
 	Claimable=await ERC20Claimable.at("0xb5d82FEE98d62cb7Bc76eabAd5879fa4b29fFE94")
-  	await deployer.deploy(MyContract,Claimable.address);
+	Mintable = await deployer.deploy(MyMintable,"Martin Mintable","MARTIN")
+  	await deployer.deploy(MyContract,Claimable.address,Mintable.address)
 	Evaluator=await evaluator.at("0x384C00Ff43Ed5376F2d7ee814677a15f3e330705")
   	await Evaluator.submitExercice(MyContract.address)
-	await Evaluator.ex2_claimedFromContract()
-	await Evaluator.ex3_withdrawFromContract()
+	//await Evaluator.ex3_withdrawFromContract()
+	//await Claimable.approve(MyContract.address,1)
+	//await Evaluator.ex4_approvedExerciceSolution()
+	//await Claimable.decreaseAllowance(MyContract.address,1)
+	//await Evaluator.ex5_revokedExerciceSolution()
+	//await Evaluator.ex6_depositTokens()
+	await Mintable.setMinter(MyContract.address,true)
+	await Mintable.setMinter(Evaluator.address,false)
+	await Evaluator.ex7_createERC20()
 };
 
 
